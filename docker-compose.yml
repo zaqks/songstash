@@ -3,11 +3,8 @@ services:
     build:
       context: ./services/app
       dockerfile: Dockerfile
-    depends_on:
-      api:
-        condition: service_started
     ports:
-      - 8001:3000
+      - 3000:3000
     env_file:
       - .env
     volumes:
