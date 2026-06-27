@@ -110,6 +110,7 @@ import {
   completeSongRequest,
   getAdminSongRequests,
 } from '../services/songRequestService';
+import { withLoading } from '../services/loadingHelper';
 
 const adminToken = ref('');
 const email = ref('');
@@ -133,7 +134,10 @@ async function loginAdmin() {
 
 async function loadRequests() {
   try {
-    backlog.value = await getAdminSongRequests(adminToken.value);
+    backlog.value = await withLoading(
+      () => getAdminSongRequests(adminToken.value),
+      'Loading song requests...'
+    );
   } catch (error) {
     alert(`Failed to load queue requests: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -141,7 +145,10 @@ async function loadRequests() {
 
 async function approveToQueue(id) {
   try {
-    await approveSongRequestToQueue(adminToken.value, id);
+    await withLoading(
+      () => approveSongRequestToQueue(adminToken.value, id),
+      'Approving song to practicing...'
+    );
     await loadRequests();
   } catch (error) {
     alert(`Failed to approve song into queue: ${error instanceof Error ? error.message : String(error)}`);
@@ -150,7 +157,10 @@ async function approveToQueue(id) {
 
 async function completeSong(id) {
   try {
-    await completeSongRequest(adminToken.value, id);
+    await withLoading(
+      () => completeSongRequest(adminToken.value, id),
+      'Marking song as released...'
+    );
     await loadRequests();
   } catch (error) {
     alert(`Failed to mark song completed: ${error instanceof Error ? error.message : String(error)}`);

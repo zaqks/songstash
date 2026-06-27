@@ -8,7 +8,9 @@ import { saveAdminToken } from './adminSessionService';
 async function sendSignInRequest(payload) {
     // POST to the provider sign-in endpoint. Let the browser set Origin automatically.
     const endpoint = appConfig.authBaseUrl;
-    const response = await httpClient.post(endpoint, payload);
+    const response = await httpClient.post(endpoint, payload, {
+        loadingMessage: 'Logging in...'
+    });
 
     return response.data;
 }

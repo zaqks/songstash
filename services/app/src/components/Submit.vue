@@ -22,6 +22,7 @@
 import { ref } from 'vue';
 import { appConfig } from '../services/config';
 import { createSongRequest } from '../services/songRequestService';
+import { withLoading } from '../services/loadingHelper';
 
 const creatorName = appConfig.creatorName;
 const songTitle = ref('');
@@ -29,10 +30,13 @@ const artist = ref('');
 
 async function handleSubmit() {
     try {
-        await createSongRequest({
-            song_title: songTitle.value,
-            artist: artist.value,
-        });
+        await withLoading(
+            () => createSongRequest({
+                song_title: songTitle.value,
+                artist: artist.value,
+            }),
+            'Submitting your song request...'
+        );
 
         alert('Song request submitted successfully.');
         songTitle.value = '';
