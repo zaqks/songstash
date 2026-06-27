@@ -1,7 +1,7 @@
 export const SongRequestStatus = {
   Pending: 'pending',
-  Queued: 'queued',
-  Completed: 'completed',
+  Practicing: 'practicing',
+  Released: 'released',
 };
 
 export function normalizeSongRequest(row) {
@@ -12,6 +12,7 @@ export function normalizeSongRequest(row) {
     status: row.status ?? SongRequestStatus.Pending,
     queue_order: Number(row.queue_order) || 0,
     created_at: row.created_at ?? null,
+    last_modified_at: row.last_modified_at ?? null,
   };
 }
 

@@ -2,21 +2,6 @@ import { neon } from '@neondatabase/serverless';
 import { SongRequestStatus, normalizeSongRequests } from '../models/songRequest';
 import { appConfig } from './config';
 
-const ORDERED_REQUESTS_QUERY = `
-  SELECT *
-  FROM song_requests
-  ORDER BY
-    CASE WHEN status = 'queued' THEN 1 ELSE 2 END,
-    queue_order ASC,
-    created_at DESC
-`;
-
-const MAX_QUEUE_ORDER_QUERY = `
-  SELECT MAX(queue_order) as max_order
-  FROM song_requests
-  WHERE status = 'queued'
-`;
-
 function createSqlClient() {
     const connectionString = appConfig.neonConnectionString;
     return neon(connectionString);
@@ -42,9 +27,12 @@ export async function getAdminSongRequests(adminToken) {
     SELECT *
     FROM song_requests
     ORDER BY
-      CASE WHEN status = 'queued' THEN 1 ELSE 2 END,
-      queue_order ASC,
-      created_at DESC
+      queue_order DESC,
+      CASE WHEN status = 'released' THEN 1 
+           WHEN status = 'practicing' THEN 2
+           WHEN status = 'pending' THEN 3
+           ELSE 4 END,
+      last_modified_at DESC
   `;
 
     return normalizeSongRequests(rows);
@@ -60,7 +48,7 @@ export async function approveSongRequestToQueue(adminToken, id) {
     const result = await sql`
     SELECT MAX(queue_order) as max_order
     FROM song_requests
-    WHERE status = 'queued'
+    WHERE status = 'practicing'
   `;
 
     const maxOrder = Number(result?.[0]?.max_order) || 0;
@@ -68,7 +56,7 @@ export async function approveSongRequestToQueue(adminToken, id) {
 
     await sql`
     UPDATE song_requests
-    SET status = ${SongRequestStatus.Queued},
+    SET status = ${SongRequestStatus.Practicing},
         queue_order = ${nextOrder}
     WHERE id = ${id}
   `;
@@ -83,8 +71,7 @@ export async function completeSongRequest(adminToken, id) {
 
     await sql`
     UPDATE song_requests
-    SET status = ${SongRequestStatus.Completed},
-        queue_order = 0
+    SET status = ${SongRequestStatus.Released}
     WHERE id = ${id}
   `;
 }
