@@ -23,6 +23,9 @@ import { ref } from 'vue';
 import { appConfig } from '../services/config';
 import { createSongRequest } from '../services/songRequestService';
 import { withLoading } from '../services/loadingHelper';
+import { useNotificationStore } from '../stores/notificationStore';
+
+const notificationStore = useNotificationStore();
 
 const creatorName = appConfig.creatorName;
 const songTitle = ref('');
@@ -38,11 +41,11 @@ async function handleSubmit() {
             'Submitting your song request...'
         );
 
-        alert('Song request submitted successfully.');
+            notificationStore.showSuccess('Song request submitted successfully!');
         songTitle.value = '';
         artist.value = '';
     } catch (error) {
-        alert(`Submission failed: ${error instanceof Error ? error.message : String(error)}`);
+            notificationStore.showError(`Submission failed: ${error instanceof Error ? error.message : String(error)}`);
     }
 }
 </script>

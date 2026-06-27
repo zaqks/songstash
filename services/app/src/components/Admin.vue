@@ -111,6 +111,9 @@ import {
   getAdminSongRequests,
 } from '../services/songRequestService';
 import { withLoading } from '../services/loadingHelper';
+import { useNotificationStore } from '../stores/notificationStore';
+
+const notificationStore = useNotificationStore();
 
 const adminToken = ref('');
 const email = ref('');
@@ -128,7 +131,7 @@ async function loginAdmin() {
     });
     await loadRequests();
   } catch (error) {
-    alert(`Admin login failed: ${error instanceof Error ? error.message : String(error)}`);
+      notificationStore.showError(`Admin login failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -139,7 +142,7 @@ async function loadRequests() {
       'Loading song requests...'
     );
   } catch (error) {
-    alert(`Failed to load queue requests: ${error instanceof Error ? error.message : String(error)}`);
+      notificationStore.showError(`Failed to load queue requests: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -150,8 +153,9 @@ async function approveToQueue(id) {
       'Approving song to practicing...'
     );
     await loadRequests();
+      notificationStore.showSuccess('Song approved to practicing!');
   } catch (error) {
-    alert(`Failed to approve song into queue: ${error instanceof Error ? error.message : String(error)}`);
+      notificationStore.showError(`Failed to approve song into queue: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -162,8 +166,9 @@ async function completeSong(id) {
       'Marking song as released...'
     );
     await loadRequests();
+      notificationStore.showSuccess('Song marked as released!');
   } catch (error) {
-    alert(`Failed to mark song completed: ${error instanceof Error ? error.message : String(error)}`);
+      notificationStore.showError(`Failed to mark song completed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
