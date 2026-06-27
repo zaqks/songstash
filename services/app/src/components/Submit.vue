@@ -25,14 +25,14 @@
             <form class="q-card submit-form" @submit.prevent="handleSubmit">
                 <div class="q-field">
                     <label class="q-label" for="song-title">Song title</label>
-                    <input id="song-title" v-model="songTitle" class="q-input" type="text" placeholder="e.g. One Kiss"
+                    <input id="song-title" v-model="songTitle" class="q-input" type="text" placeholder="e.g. Duality"
                         required />
                 </div>
 
                 <div class="q-field">
-                    <label class="q-label" for="artist">Artist</label>
+                    <label class="q-label" for="artist">Artist / Band</label>
                     <input id="artist" v-model="artist" class="q-input" type="text"
-                        placeholder="e.g. Calvin Harris & Dua Lipa" required />
+                        placeholder="e.g. Slipknot" required />
                 </div>
 
                 <button type="submit" class="q-btn q-btn--primary q-btn--block">
