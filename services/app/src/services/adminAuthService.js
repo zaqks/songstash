@@ -1,17 +1,14 @@
 import { httpClient } from './httpClient';
 import { appConfig } from './config';
 import { extractAdminToken, extractApiErrorMessage } from '../models/auth';
+import { saveAdminToken } from './adminSessionService';
 
 
 
 async function sendSignInRequest(payload) {
-    // We use headers: { Origin: undefined } to explicitly force 
-    // Axios to NOT send or mutate the forbidden header if it's set in defaults.
-    const response = await httpClient.post(appConfig.authBaseUrl, payload, {
-        headers: {
-            'Origin': undefined
-        }
-    });
+    // POST to the provider sign-in endpoint. Let the browser set Origin automatically.
+    const endpoint = appConfig.authBaseUrl?.replace(/\/$/, '') + '/sign-in/email';
+    const response = await httpClient.post(endpoint, payload);
 
     return response.data;
 }
@@ -30,6 +27,14 @@ export async function signInAdmin(credentials) {
 
         if (!token) {
             throw new Error('Login succeeded but no token/session identifier was returned.');
+        }
+
+        // Persist token for 3 months
+        try {
+            saveAdminToken(token);
+        } catch (e) {
+            // non-fatal
+            console.warn('Failed to persist admin token', e);
         }
 
         return token;

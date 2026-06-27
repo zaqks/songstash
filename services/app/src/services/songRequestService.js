@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { SongRequestStatus, normalizeSongRequests } from '../models/songRequest';
-import { assertNeonConnectionString } from './config';
+import { appConfig } from './config';
 
 const ORDERED_REQUESTS_QUERY = `
   SELECT *
@@ -18,7 +18,7 @@ const MAX_QUEUE_ORDER_QUERY = `
 `;
 
 function createSqlClient(adminToken) {
-  const connectionString = assertNeonConnectionString();
+  const connectionString = appConfig.neonConnectionString;
 
   if (adminToken) {
     return neon(connectionString, { authToken: adminToken });

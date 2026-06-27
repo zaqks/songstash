@@ -58,6 +58,7 @@
 import { onMounted, ref } from 'vue';
 import { SongRequestStatus } from '../models/songRequest';
 import { signInAdmin } from '../services/adminAuthService';
+import { loadAdminToken, clearAdminToken } from '../services/adminSessionService';
 import {
   approveSongRequestToQueue,
   completeSongRequest,
@@ -112,10 +113,18 @@ function logoutAdmin() {
   email.value = '';
   password.value = '';
   backlog.value = [];
+  try {
+    clearAdminToken();
+  } catch (e) {
+    console.warn('Failed to clear persisted admin token', e);
+  }
 }
 
 onMounted(async () => {
-  if (adminToken.value) {
+  // load persisted admin token (if still valid)
+  const persisted = loadAdminToken();
+  if (persisted) {
+    adminToken.value = persisted;
     await loadRequests();
   }
 });
