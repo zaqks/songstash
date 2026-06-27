@@ -1,14 +1,11 @@
 <template>
   <div id="app">
-    <div class="q-shell" :class="{ 'q-shell--wide': adminToken }">
+    <div class="q-shell" :class="{ 'q-shell--wide': adminToken, 'q-shell--centered': !adminToken }">
       <!-- ============ LOGIN ============ -->
       <div v-if="!adminToken" class="login-screen">
         <header class="q-header">
           <div class="q-header__mark">
-            <svg class="q-logo-hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-              <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
-              <circle cx="50" cy="50" r="8" fill="currentColor" />
-            </svg>
+            <span class="q-mark-dot" aria-hidden="true"></span>
             <p class="q-eyebrow q-eyebrow--red">Queue</p>
           </div>
         </header>
@@ -37,10 +34,7 @@
       <div v-else>
         <header class="q-header">
           <div class="q-header__mark">
-            <svg class="q-logo-hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-              <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
-              <circle cx="50" cy="50" r="8" fill="currentColor" />
-            </svg>
+            <span class="q-mark-dot" aria-hidden="true"></span>
             <p class="q-eyebrow q-eyebrow--red">Queue / Dashboard</p>
           </div>
           <button type="button" class="q-btn q-btn--ghost q-btn--sm" @click="logoutAdmin">
@@ -55,10 +49,7 @@
 
         <!-- Search -->
         <div class="q-field q-input-icon-wrap">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
+          <span class="q-search-icon" aria-hidden="true">Search</span>
           <input
             v-model="searchQuery"
             class="q-input"
@@ -70,23 +61,18 @@
         <!-- Filters -->
         <div class="filters">
           <div class="q-field filters__item">
-            <label class="q-label" for="status-filter">Status</label>
-            <select id="status-filter" v-model="selectedStatuses" class="q-select" multiple>
-              <option :value="SongRequestStatus.Pending">Pending</option>
-              <option :value="SongRequestStatus.Practicing">Practicing</option>
-              <option :value="SongRequestStatus.Released">Released</option>
-            </select>
-          </div>
-
-          <div class="q-field filters__item">
-            <label class="q-label" for="artist-filter">Artist</label>
-            <div class="q-select-wrap">
-              <select id="artist-filter" v-model="selectedArtist" class="q-select">
-                <option value="">All artists</option>
-                <option v-for="artist in uniqueArtists" :key="artist" :value="artist">
-                  {{ artist }}
-                </option>
-              </select>
+            <label class="q-label">Status</label>
+            <div class="status-chips" role="group" aria-label="Filter by status">
+              <button
+                v-for="status in statusOptions"
+                :key="status"
+                type="button"
+                class="status-chip"
+                :class="{ 'status-chip--active': selectedStatuses.includes(status) }"
+                @click="toggleStatus(status)"
+              >
+                {{ status }}
+              </button>
             </div>
           </div>
         </div>
@@ -95,9 +81,7 @@
 
         <!-- Empty state -->
         <div v-if="filteredSongs.length === 0" class="q-empty">
-          <svg class="q-empty__hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-            <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
-          </svg>
+          <span class="q-empty__mark" aria-hidden="true">Q</span>
           <p class="q-empty__title">No requests found</p>
           <p class="q-text-muted">Try a different search term or filter.</p>
         </div>
@@ -170,8 +154,12 @@ const email = ref('');
 const password = ref('');
 const backlog = ref([]);
 const searchQuery = ref('');
-const selectedArtist = ref('');
 const selectedStatuses = ref([SongRequestStatus.Pending, SongRequestStatus.Practicing]);
+const statusOptions = [
+  SongRequestStatus.Pending,
+  SongRequestStatus.Practicing,
+  SongRequestStatus.Released,
+];
 
 async function loginAdmin() {
   try {
@@ -246,18 +234,25 @@ function badgeClass(status) {
   return '';
 }
 
+function toggleStatus(status) {
+  if (selectedStatuses.value.includes(status)) {
+    const remaining = selectedStatuses.value.filter((item) => item !== status);
+    selectedStatuses.value = remaining.length > 0 ? remaining : [...statusOptions];
+    return;
+  }
+
+  selectedStatuses.value = [...selectedStatuses.value, status];
+}
+
 // Computed properties
-const uniqueArtists = computed(() => {
-  return [...new Set(backlog.value.map((song) => song.artist))].sort();
-});
 
 const filteredSongs = computed(() => {
-  return backlog.value.filter((song) => {
-    if (!selectedStatuses.value.includes(song.status)) {
-      return false;
-    }
+  const activeStatuses = selectedStatuses.value.length > 0
+    ? selectedStatuses.value
+    : statusOptions;
 
-    if (selectedArtist.value && song.artist !== selectedArtist.value) {
+  return backlog.value.filter((song) => {
+    if (!activeStatuses.includes(song.status)) {
       return false;
     }
 
@@ -284,11 +279,60 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.q-shell--centered {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .login-screen__intro {
   margin-bottom: var(--sp-6);
 }
 .login-screen__intro .q-eyebrow {
   margin-bottom: var(--sp-3);
+}
+
+.q-mark-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 4px var(--red-wash);
+  flex-shrink: 0;
+}
+
+.q-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-faint);
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.q-input-icon-wrap .q-input {
+  padding-left: 68px;
+}
+
+.q-empty__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto var(--sp-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 50%;
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--tracking-caps);
 }
 
 .login-form {
@@ -301,18 +345,41 @@ onMounted(async () => {
 }
 
 .filters {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0 var(--sp-4);
+  display: block;
   margin-bottom: var(--sp-2);
 }
 
 .filters__item { margin-bottom: var(--sp-4); }
 
-@media (min-width: 560px) {
-  .filters {
-    grid-template-columns: 1fr 1fr;
-  }
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.status-chip {
+  appearance: none;
+  border: 1px solid var(--hairline-strong);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.status-chip:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+.status-chip--active {
+  background: var(--red-wash);
+  border-color: var(--red);
+  color: var(--red);
 }
 
 /* ---- Table: full grid on desktop, stacked cards on mobile ---- */

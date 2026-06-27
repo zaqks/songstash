@@ -6,28 +6,9 @@
       :class="`notification-${notificationStore.notification.type}`"
     >
       <div class="notification-container">
-        <div class="notification-icon">
-          <svg
-            v-if="notificationStore.notification.type === 'success'"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <svg
-            v-else-if="notificationStore.notification.type === 'error'"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="15" y1="9" x2="9" y2="15"></line>
-            <line x1="9" y1="9" x2="15" y2="15"></line>
-          </svg>
-        </div>
+        <span class="notification-icon" aria-hidden="true">
+          {{ notificationStore.notification.type === 'success' ? 'OK' : '!' }}
+        </span>
         <p class="notification-message">{{ notificationStore.notification.message }}</p>
         <button
           type="button"
@@ -89,18 +70,20 @@ const notificationStore = useNotificationStore();
 }
 
 .notification-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
   color: inherit;
-}
-
-.notification-icon svg {
-  width: 100%;
-  height: 100%;
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .notification-message {
