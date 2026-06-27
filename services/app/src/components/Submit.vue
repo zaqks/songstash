@@ -20,27 +20,19 @@
 
 <script setup>
 import { ref } from 'vue';
-import { neon } from '@neondatabase/serverless'; // Standard static import
+import { appConfig } from '../services/config';
+import { createSongRequest } from '../services/songRequestService';
 
-const creatorName = import.meta.env.VITE_CREATOR_NAME || '';
+const creatorName = appConfig.creatorName;
 const songTitle = ref('');
 const artist = ref('');
 
 async function handleSubmit() {
     try {
-        const connectionString = import.meta.env.VITE_NEON_API_URL;
-        
-        if (!connectionString) {
-            throw new Error("VITE_NEON_API_URL is missing from environment variables.");
-        }
-
-        const sql = neon(connectionString);
-
-        // Uses corrected column name: song_title
-        await sql`
-            INSERT INTO song_requests (song_title, artist)
-            VALUES (${songTitle.value}, ${artist.value})
-        `;
+        await createSongRequest({
+            song_title: songTitle.value,
+            artist: artist.value,
+        });
 
         alert('Song request submitted successfully.');
         songTitle.value = '';
