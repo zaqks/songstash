@@ -4,7 +4,7 @@ set -a
 source ../.env
 set +a
 
-curl -i -X POST "$AUTH_URL" \
+curl -i -X POST "$NEON_AUTH_URL" \
   -H "Content-Type: application/json" \
   -H "Origin: $ORIGIN" \
   -d "{
