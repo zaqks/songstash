@@ -1,101 +1,151 @@
 <template>
-  <div>
-    <h1>Admin Dashboard</h1>
+  <div id="app">
+    <div class="q-shell" :class="{ 'q-shell--wide': adminToken }">
+      <!-- ============ LOGIN ============ -->
+      <div v-if="!adminToken" class="login-screen">
+        <header class="q-header">
+          <div class="q-header__mark">
+            <svg class="q-logo-hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+              <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
+              <circle cx="50" cy="50" r="8" fill="currentColor" />
+            </svg>
+            <p class="q-eyebrow q-eyebrow--red">Queue</p>
+          </div>
+        </header>
 
-    <div v-if="!adminToken">
-      <h2>Admin Login</h2>
-      <form @submit.prevent="loginAdmin">
-        <div>
-          <label for="admin-email">Email</label>
-          <input id="admin-email" v-model="email" type="email" required />
+        <div class="login-screen__intro">
+          <p class="q-eyebrow">Creator access</p>
+          <h1 class="q-title q-title--2xl">Admin login</h1>
         </div>
 
-        <div>
-          <label for="admin-password">Password</label>
-          <input id="admin-password" v-model="password" type="password" required />
-        </div>
+        <form class="q-card login-form" @submit.prevent="loginAdmin">
+          <div class="q-field">
+            <label class="q-label" for="admin-email">Email</label>
+            <input id="admin-email" v-model="email" class="q-input" type="email" required />
+          </div>
 
-        <button type="submit">Login</button>
-      </form>
-    </div>
+          <div class="q-field">
+            <label class="q-label" for="admin-password">Password</label>
+            <input id="admin-password" v-model="password" class="q-input" type="password" required />
+          </div>
 
-    <div v-else>
-      <button type="button" @click="logoutAdmin">Logout</button>
-
-      <h2>Song Request Queue</h2>
-
-      <!-- Search Bar -->
-      <div>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by song title or artist..."
-        />
+          <button type="submit" class="q-btn q-btn--primary q-btn--block">Log in</button>
+        </form>
       </div>
 
-      <!-- Filters -->
-      <div>
-        <div>
-          <label for="status-filter">Filter by Status:</label>
-          <select id="status-filter" v-model="selectedStatuses" multiple>
-            <option :value="SongRequestStatus.Pending">Pending</option>
-            <option :value="SongRequestStatus.Practicing">Practicing</option>
-            <option :value="SongRequestStatus.Released">Released</option>
-          </select>
+      <!-- ============ DASHBOARD ============ -->
+      <div v-else>
+        <header class="q-header">
+          <div class="q-header__mark">
+            <svg class="q-logo-hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+              <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
+              <circle cx="50" cy="50" r="8" fill="currentColor" />
+            </svg>
+            <p class="q-eyebrow q-eyebrow--red">Queue / Dashboard</p>
+          </div>
+          <button type="button" class="q-btn q-btn--ghost q-btn--sm" @click="logoutAdmin">
+            Log out
+          </button>
+        </header>
+
+        <div class="q-section__head">
+          <h1 class="q-title q-title--xl">Song request queue</h1>
+          <span class="q-text-muted result-count">{{ filteredSongs.length }} result{{ filteredSongs.length === 1 ? '' : 's' }}</span>
         </div>
 
-        <div>
-          <label for="artist-filter">Filter by Artist:</label>
-          <select id="artist-filter" v-model="selectedArtist">
-            <option value="">All Artists</option>
-            <option v-for="artist in uniqueArtists" :key="artist" :value="artist">
-              {{ artist }}
-            </option>
-          </select>
+        <!-- Search -->
+        <div class="q-field q-input-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            v-model="searchQuery"
+            class="q-input"
+            type="text"
+            placeholder="Search by song title or artist..."
+          />
         </div>
+
+        <!-- Filters -->
+        <div class="filters">
+          <div class="q-field filters__item">
+            <label class="q-label" for="status-filter">Status</label>
+            <select id="status-filter" v-model="selectedStatuses" class="q-select" multiple>
+              <option :value="SongRequestStatus.Pending">Pending</option>
+              <option :value="SongRequestStatus.Practicing">Practicing</option>
+              <option :value="SongRequestStatus.Released">Released</option>
+            </select>
+          </div>
+
+          <div class="q-field filters__item">
+            <label class="q-label" for="artist-filter">Artist</label>
+            <div class="q-select-wrap">
+              <select id="artist-filter" v-model="selectedArtist" class="q-select">
+                <option value="">All artists</option>
+                <option v-for="artist in uniqueArtists" :key="artist" :value="artist">
+                  {{ artist }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <hr class="q-divider" />
+
+        <!-- Empty state -->
+        <div v-if="filteredSongs.length === 0" class="q-empty">
+          <svg class="q-empty__hex" viewBox="0 0 100 100" fill="none" aria-hidden="true">
+            <path d="M50 4 92 27.5v45L50 96 8 72.5v-45z" stroke="currentColor" stroke-width="6" />
+          </svg>
+          <p class="q-empty__title">No requests found</p>
+          <p class="q-text-muted">Try a different search term or filter.</p>
+        </div>
+
+        <!-- Table (desktop) -->
+        <table v-else class="queue-table">
+          <thead>
+            <tr>
+              <th>Song title</th>
+              <th>Artist</th>
+              <th>Status</th>
+              <th>Queue order</th>
+              <th>Last modified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="song in filteredSongs" :key="song.id">
+              <td class="cell-title">{{ song.song_title }}</td>
+              <td class="q-text-muted">{{ song.artist }}</td>
+              <td>
+                <span class="q-badge" :class="badgeClass(song.status)">{{ song.status }}</span>
+              </td>
+              <td class="q-text-muted">{{ song.queue_order ?? '—' }}</td>
+              <td class="q-text-muted cell-date">{{ formatDate(song.last_modified_at) }}</td>
+              <td>
+                <button
+                  v-if="song.status === SongRequestStatus.Pending"
+                  type="button"
+                  class="q-btn q-btn--primary q-btn--sm"
+                  @click="approveToQueue(song.id)"
+                >
+                  Approve
+                </button>
+                <button
+                  v-else-if="song.status === SongRequestStatus.Practicing"
+                  type="button"
+                  class="q-btn q-btn--ghost q-btn--sm"
+                  @click="completeSong(song.id)"
+                >
+                  Mark released
+                </button>
+                <span v-else class="q-text-faint">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <!-- Table -->
-      <div v-if="filteredSongs.length === 0">No requests found.</div>
-
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Song Title</th>
-            <th>Artist</th>
-            <th>Status</th>
-            <th>Queue Order</th>
-            <th>Last Modified</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="song in filteredSongs" :key="song.id">
-            <td>{{ song.song_title }}</td>
-            <td>{{ song.artist }}</td>
-            <td>{{ song.status }}</td>
-            <td>{{ song.queue_order }}</td>
-            <td>{{ formatDate(song.last_modified_at) }}</td>
-            <td>
-              <button
-                v-if="song.status === SongRequestStatus.Pending"
-                type="button"
-                @click="approveToQueue(song.id)"
-              >
-                Approve to Practicing
-              </button>
-
-              <button
-                v-else-if="song.status === SongRequestStatus.Practicing"
-                type="button"
-                @click="completeSong(song.id)"
-              >
-                Mark Released
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </template>
@@ -131,7 +181,7 @@ async function loginAdmin() {
     });
     await loadRequests();
   } catch (error) {
-      notificationStore.showError(`Admin login failed: ${error instanceof Error ? error.message : String(error)}`);
+    notificationStore.showError(`Admin login failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -142,7 +192,7 @@ async function loadRequests() {
       'Loading song requests...'
     );
   } catch (error) {
-      notificationStore.showError(`Failed to load queue requests: ${error instanceof Error ? error.message : String(error)}`);
+    notificationStore.showError(`Failed to load queue requests: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -153,9 +203,9 @@ async function approveToQueue(id) {
       'Approving song to practicing...'
     );
     await loadRequests();
-      notificationStore.showSuccess('Song approved to practicing!');
+    notificationStore.showSuccess('Song approved to practicing!');
   } catch (error) {
-      notificationStore.showError(`Failed to approve song into queue: ${error instanceof Error ? error.message : String(error)}`);
+    notificationStore.showError(`Failed to approve song into queue: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -166,9 +216,9 @@ async function completeSong(id) {
       'Marking song as released...'
     );
     await loadRequests();
-      notificationStore.showSuccess('Song marked as released!');
+    notificationStore.showSuccess('Song marked as released!');
   } catch (error) {
-      notificationStore.showError(`Failed to mark song completed: ${error instanceof Error ? error.message : String(error)}`);
+    notificationStore.showError(`Failed to mark song completed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -189,6 +239,13 @@ function formatDate(dateString) {
   return new Date(dateString).toLocaleString();
 }
 
+function badgeClass(status) {
+  if (status === SongRequestStatus.Pending) return 'q-badge--pending';
+  if (status === SongRequestStatus.Practicing) return 'q-badge--practicing';
+  if (status === SongRequestStatus.Released) return 'q-badge--released';
+  return '';
+}
+
 // Computed properties
 const uniqueArtists = computed(() => {
   return [...new Set(backlog.value.map((song) => song.artist))].sort();
@@ -196,17 +253,14 @@ const uniqueArtists = computed(() => {
 
 const filteredSongs = computed(() => {
   return backlog.value.filter((song) => {
-    // Filter by status
     if (!selectedStatuses.value.includes(song.status)) {
       return false;
     }
 
-    // Filter by artist
     if (selectedArtist.value && song.artist !== selectedArtist.value) {
       return false;
     }
 
-    // Filter by search query
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase();
       const matchesTitle = song.song_title.toLowerCase().includes(query);
@@ -221,7 +275,6 @@ const filteredSongs = computed(() => {
 });
 
 onMounted(async () => {
-  // load persisted admin token (if still valid)
   const persisted = loadAdminToken();
   if (persisted) {
     adminToken.value = persisted;
@@ -231,53 +284,128 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-table {
-  border-collapse: collapse;
+.login-screen__intro {
+  margin-bottom: var(--sp-6);
+}
+.login-screen__intro .q-eyebrow {
+  margin-bottom: var(--sp-3);
+}
+
+.login-form {
+  padding: var(--sp-6) var(--sp-5);
+}
+
+.result-count {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0 var(--sp-4);
+  margin-bottom: var(--sp-2);
+}
+
+.filters__item { margin-bottom: var(--sp-4); }
+
+@media (min-width: 560px) {
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---- Table: full grid on desktop, stacked cards on mobile ---- */
+.queue-table {
   width: 100%;
-  margin-top: 20px;
+  border-collapse: collapse;
 }
 
-thead {
-  background-color: #f5f5f5;
+.queue-table thead {
+  display: none;
 }
 
-th,
-td {
-  border: 1px solid #ddd;
-  padding: 12px;
-  text-align: left;
+.queue-table tbody tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: var(--sp-4);
+  margin-bottom: var(--sp-3);
 }
 
-th {
-  font-weight: bold;
-}
-
-tr:hover {
-  background-color: #f9f9f9;
-}
-
-button {
-  padding: 6px 12px;
-  background-color: #007bff;
-  color: white;
+.queue-table tbody td {
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 0;
+  font-size: var(--fs-sm);
 }
 
-button:hover {
-  background-color: #0056b3;
+.cell-title {
+  grid-column: 1 / -1;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
 }
 
-select,
-input[type="text"] {
-  padding: 8px;
-  margin: 8px 8px 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.queue-table tbody td:last-child {
+  grid-column: 1 / -1;
+  margin-top: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--hairline);
 }
 
-div > div {
-  margin-bottom: 15px;
+@media (min-width: 760px) {
+  .queue-table thead { display: table-header-group; }
+
+  .queue-table thead th {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: 1px solid var(--hairline-strong);
+  }
+
+  .queue-table tbody tr {
+    display: table-row;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--hairline);
+    border-radius: 0;
+    padding: 0;
+    margin-bottom: 0;
+  }
+
+  .queue-table tbody tr:hover {
+    background: var(--surface);
+  }
+
+  .queue-table tbody td {
+    display: table-cell;
+    padding: var(--sp-4);
+    vertical-align: middle;
+  }
+
+  .cell-title {
+    grid-column: auto;
+    font-size: var(--fs-md);
+  }
+
+  .queue-table tbody td:last-child {
+    grid-column: auto;
+    margin-top: 0;
+    padding-top: var(--sp-4);
+    border-top: none;
+    text-align: right;
+  }
+
+  .cell-date { white-space: nowrap; }
 }
 </style>

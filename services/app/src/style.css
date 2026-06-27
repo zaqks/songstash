@@ -1,0 +1,466 @@
+/* ==========================================================================
+   QUEUE — Global Design System
+   A private backlog system for audience song requests.
+   Visual language: dark console / DJ-software, sharp edges, condensed caps,
+   single red accent. Mobile-first. Every component below is built only
+   from these tokens — change a token here, the whole app follows.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+/* --------------------------------------------------------------------------
+   1. TOKENS
+   -------------------------------------------------------------------------- */
+:root {
+  /* Surfaces */
+  --bg: #0a0a0a;
+  --surface: #161616;
+  --surface-raised: #1f1f1f;
+  --surface-sunken: #050505;
+  --hairline: #2a2a2a;
+  --hairline-strong: #3a3a3a;
+
+  /* Brand / accent */
+  --red: #e6112a;
+  --red-hover: #ff2d42;
+  --red-press: #b80e22;
+  --red-wash: rgba(230, 17, 42, 0.12);
+  --red-wash-strong: rgba(230, 17, 42, 0.22);
+
+  /* Text */
+  --text: #ededed;
+  --text-muted: #8c8c8c;
+  --text-faint: #5a5a5a;
+  --text-on-red: #ffffff;
+
+  /* Status */
+  --status-pending: #8c8c8c;
+  --status-pending-bg: rgba(140, 140, 140, 0.12);
+  --status-practicing: #e6112a;
+  --status-practicing-bg: rgba(230, 17, 42, 0.14);
+  --status-released: #2dd66b;
+  --status-released-bg: rgba(45, 214, 107, 0.12);
+
+  /* Feedback */
+  --success: #2dd66b;
+  --success-bg: #103820;
+  --error: #ff3b30;
+  --error-bg: #3a1210;
+
+  /* Type */
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --fs-2xl: 1.75rem;   /* page titles */
+  --fs-xl: 1.25rem;    /* section titles */
+  --fs-lg: 1.0625rem;  /* card titles */
+  --fs-md: 0.9375rem;  /* body */
+  --fs-sm: 0.8125rem;  /* labels, meta */
+  --fs-xs: 0.6875rem;  /* eyebrow, badges */
+
+  --lh-tight: 1.15;
+  --lh-body: 1.5;
+
+  --tracking-caps: 0.08em;
+  --tracking-wide: 0.14em;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+
+  /* Shape — BPM Supreme's system is sharp, not rounded */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-none: 0;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.15s;
+  --dur-base: 0.25s;
+
+  /* Layout */
+  --maxw-mobile: 480px;
+  --maxw-admin: 1080px;
+  --header-h: 56px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* --------------------------------------------------------------------------
+   2. RESET
+   -------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#app {
+  min-height: 100vh;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 50% -10%, var(--red-wash), transparent 60%);
+  background-repeat: no-repeat;
+}
+
+h1, h2, h3, h4 { margin: 0; }
+p { margin: 0; }
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+a { color: var(--red); text-decoration: none; }
+
+::selection { background: var(--red-wash-strong); color: var(--text); }
+
+/* Visible keyboard focus everywhere — never remove outline without replacing it */
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. TYPE UTILITIES
+   -------------------------------------------------------------------------- */
+.q-eyebrow {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.q-eyebrow--red { color: var(--red); }
+
+.q-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  line-height: var(--lh-tight);
+  color: var(--text);
+}
+
+.q-title--2xl { font-size: var(--fs-2xl); }
+.q-title--xl { font-size: var(--fs-xl); }
+.q-title--lg { font-size: var(--fs-lg); }
+
+.q-text-muted { color: var(--text-muted); }
+.q-text-faint { color: var(--text-faint); }
+
+/* --------------------------------------------------------------------------
+   4. LAYOUT SHELLS
+   -------------------------------------------------------------------------- */
+.q-shell {
+  max-width: var(--maxw-mobile);
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0 var(--sp-4) calc(var(--sp-8) + var(--safe-bottom));
+  position: relative;
+}
+
+.q-shell--wide { max-width: var(--maxw-admin); }
+
+.q-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-6) 0 var(--sp-5);
+}
+
+.q-header__mark {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.q-logo-hex {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  color: var(--red);
+}
+
+.q-section {
+  margin-bottom: var(--sp-7);
+}
+
+.q-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.q-divider {
+  border: none;
+  border-top: 1px solid var(--hairline);
+  margin: var(--sp-5) 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. CARD / SURFACE
+   -------------------------------------------------------------------------- */
+.q-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.q-card--raised { background: var(--surface-raised); }
+
+.q-card--accent-edge {
+  border-left: 3px solid var(--red);
+}
+
+/* --------------------------------------------------------------------------
+   6. FORM CONTROLS
+   -------------------------------------------------------------------------- */
+.q-field {
+  margin-bottom: var(--sp-5);
+}
+
+.q-label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--sp-2);
+}
+
+.q-input,
+.q-select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: var(--fs-md);
+  padding: 12px 14px;
+  transition: border-color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.q-input::placeholder { color: var(--text-faint); }
+
+.q-input:hover,
+.q-select:hover {
+  border-color: var(--text-faint);
+}
+
+.q-input:focus,
+.q-select:focus {
+  border-color: var(--red);
+  background: var(--surface-raised);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--red-wash);
+}
+
+.q-select-wrap {
+  position: relative;
+}
+
+.q-select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 9px;
+  height: 6px;
+  margin-top: -2px;
+  background-color: var(--text-muted);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  pointer-events: none;
+}
+
+.q-select-wrap .q-select {
+  background-image: none;
+  padding-right: 36px;
+}
+
+.q-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%238c8c8c' d='M6 8 0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 11px 7px;
+  padding-right: 36px;
+}
+
+.q-select[multiple] {
+  background-image: none;
+  padding: var(--sp-2);
+}
+
+.q-select[multiple] option {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+}
+
+.q-input-icon-wrap {
+  position: relative;
+}
+
+.q-input-icon-wrap .q-input { padding-left: 40px; }
+
+.q-input-icon-wrap svg {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   7. BUTTONS
+   -------------------------------------------------------------------------- */
+.q-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  padding: 13px 22px;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+  white-space: nowrap;
+}
+
+.q-btn:active { transform: scale(0.98); }
+.q-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.q-btn--primary {
+  background: var(--red);
+  color: var(--text-on-red);
+}
+.q-btn--primary:hover:not(:disabled) { background: var(--red-hover); }
+.q-btn--primary:active:not(:disabled) { background: var(--red-press); }
+
+.q-btn--ghost {
+  background: transparent;
+  border-color: var(--hairline-strong);
+  color: var(--text);
+}
+.q-btn--ghost:hover:not(:disabled) {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.q-btn--subtle {
+  background: var(--surface-raised);
+  color: var(--text-muted);
+}
+.q-btn--subtle:hover:not(:disabled) { color: var(--text); }
+
+.q-btn--block { width: 100%; }
+.q-btn--sm { padding: 9px 16px; font-size: var(--fs-xs); }
+
+/* --------------------------------------------------------------------------
+   8. STATUS BADGE — signature element
+   Angled-corner tag, thin rule on top, condensed caps. Echoes the BPM
+   card-corner icon notches and the hexagon mark.
+   -------------------------------------------------------------------------- */
+.q-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  padding: 5px 10px 5px 8px;
+  border-top: 2px solid currentColor;
+  background: var(--surface-raised);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+.q-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.q-badge--pending { color: var(--status-pending); background: var(--status-pending-bg); }
+.q-badge--practicing { color: var(--status-practicing); background: var(--status-practicing-bg); }
+.q-badge--released { color: var(--status-released); background: var(--status-released-bg); }
+
+/* --------------------------------------------------------------------------
+   9. EMPTY / UTILITY STATES
+   -------------------------------------------------------------------------- */
+.q-empty {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4);
+  color: var(--text-muted);
+}
+
+.q-empty__hex {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto var(--sp-4);
+  color: var(--hairline-strong);
+}
+
+.q-empty__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: var(--sp-1);
+}
+
+/* --------------------------------------------------------------------------
+   10. SCROLLBAR (webkit) — keep it dark/quiet
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--surface-sunken); }
+::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: var(--radius-sm); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+/* --------------------------------------------------------------------------
+   11. RESPONSIVE — admin table to card breakpoint
+   -------------------------------------------------------------------------- */
+@media (min-width: 720px) {
+  .q-shell { padding-left: var(--sp-7); padding-right: var(--sp-7); }
+}

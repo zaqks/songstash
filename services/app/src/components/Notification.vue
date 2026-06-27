@@ -52,40 +52,50 @@ const notificationStore = useNotificationStore();
 .notification-overlay {
   position: fixed;
   top: 20px;
+  left: 20px;
   right: 20px;
   z-index: 10000;
-  animation: slideIn 0.3s ease-out;
+  display: flex;
+  justify-content: center;
+}
+
+@media (min-width: 480px) {
+  .notification-overlay {
+    left: auto;
+    right: 20px;
+  }
 }
 
 .notification-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  min-width: 300px;
+  width: 100%;
   max-width: 400px;
-  position: relative;
+  padding: 14px 16px;
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline-strong);
+  border-top: 2px solid currentColor;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .notification-success .notification-container {
-  background-color: #10b981;
-  color: white;
+  color: var(--success);
 }
 
 .notification-error .notification-container {
-  background-color: #ef4444;
-  color: white;
+  color: var(--error);
 }
 
 .notification-icon {
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: inherit;
 }
 
 .notification-icon svg {
@@ -96,56 +106,42 @@ const notificationStore = useNotificationStore();
 .notification-message {
   flex: 1;
   margin: 0;
-  font-size: 14px;
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
   font-weight: 500;
   line-height: 1.4;
+  color: var(--text);
 }
 
 .notification-close {
   flex-shrink: 0;
   background: none;
   border: none;
-  color: inherit;
-  font-size: 24px;
+  color: var(--text-faint);
+  font-size: 20px;
   line-height: 1;
   cursor: pointer;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: color var(--dur-fast) var(--ease);
 }
 
 .notification-close:hover {
-  opacity: 1;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  color: var(--text);
 }
 
 .popup-fade-enter-active,
 .popup-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all var(--dur-base) var(--ease);
 }
 
-.popup-fade-enter-from {
-  transform: translateX(400px);
-  opacity: 0;
-}
-
+.popup-fade-enter-from,
 .popup-fade-leave-to {
-  transform: translateX(400px);
+  transform: translateY(-12px);
   opacity: 0;
 }
 </style>
