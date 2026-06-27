@@ -2,66 +2,47 @@ import { httpClient } from './httpClient';
 import { appConfig } from './config';
 import { extractAdminToken, extractApiErrorMessage } from '../models/auth';
 
-const SIGN_IN_PATH = '/sign-in/email';
 
-function buildSignInUrl() {
-  return `${appConfig.authBaseUrl}${SIGN_IN_PATH}`;
-}
 
-async function sendSignInRequest(payload, originHeader) {
-  const response = await httpClient.post(buildSignInUrl(), payload, {
-    headers: {
-      Origin: originHeader,
-    },
-  });
+async function sendSignInRequest(payload) {
+    // We use headers: { Origin: undefined } to explicitly force 
+    // Axios to NOT send or mutate the forbidden header if it's set in defaults.
+    const response = await httpClient.post(appConfig.authBaseUrl, payload, {
+        headers: {
+            'Origin': undefined
+        }
+    });
 
-  return response.data;
+    return response.data;
 }
 
 export async function signInAdmin(credentials) {
-  const loginPayload = {
-    email: credentials.email,
-    password: credentials.password,
-    callbackURL: `${window.location.origin}/admin`,
-  };
+    // Better Auth expects a completely flat schema: only email and password.
+    // Removing callbackURL prevents the 500 Internal Server error.
+    const loginPayload = {
+        email: credentials.email,
+        password: credentials.password,
+    };
 
-  try {
-    const data = await sendSignInRequest(loginPayload, window.location.origin);
-    const token = extractAdminToken(data);
-
-    if (!token) {
-      throw new Error('Login succeeded but no token/session identifier was returned.');
-    }
-
-    return token;
-  } catch (error) {
-    const firstMessage =
-      error?.response?.data?.message || error?.message || 'Admin login failed.';
-
-    const shouldRetryWithLocalhost =
-      typeof firstMessage === 'string' &&
-      firstMessage.includes('Symbol(pino.msgPrefix)') &&
-      window.location.origin !== 'http://localhost:3000';
-
-    if (shouldRetryWithLocalhost) {
-      try {
-        const data = await sendSignInRequest(loginPayload, 'http://localhost:3000');
+    try {
+        const data = await sendSignInRequest(loginPayload);
         const token = extractAdminToken(data);
 
         if (!token) {
-          throw new Error('Login succeeded but no token/session identifier was returned.');
+            throw new Error('Login succeeded but no token/session identifier was returned.');
         }
 
         return token;
-      } catch (retryError) {
-        const fallbackMessage = 'Admin login failed on retry.';
-        throw new Error(
-          extractApiErrorMessage(retryError?.response?.data, fallbackMessage),
-        );
-      }
-    }
+    } catch (error) {
+        const status = error?.response?.status;
+        const remoteMessage = extractApiErrorMessage(error?.response?.data, null);
+        const baseMessage = remoteMessage || error?.message || 'Admin login failed.';
 
-    const fallbackMessage = 'Admin login failed.';
-    throw new Error(extractApiErrorMessage(error?.response?.data, fallbackMessage));
-  }
+        let fullMessage = baseMessage;
+        if (status) {
+            fullMessage = `(${status}) ${fullMessage}`;
+        }
+
+        throw new Error(fullMessage);
+    }
 }
